@@ -1,0 +1,2 @@
+# ergodox
+ErgoDox keyboard settings
