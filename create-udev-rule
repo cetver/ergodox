@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Creates an udev rule for the ErgoDox keyboard, to avoid connection errors (chrome://device-log - hidraw):
+# - NotAllowedError: Failed to open the device.
+# - Received invalid protocol version from device
+# - etc
+
+# SETTINGS
+RULE_PATH="/etc/udev/rules.d/10-ergodox-hidraw.rules"
+EXISTING_GROUP_NAME=$USER
+# /SETTINGS
+
+DEVICE_IDS=$(lsusb | grep --ignore-case ergodox | grep --extended-regexp --only-matching "[[:xdigit:]]+:[[:xdigit:]]+")
+VENDOR_ID=$(echo "$DEVICE_IDS" | cut --delimiter=':' --fields=1)
+PRODUCT_ID=$(echo "$DEVICE_IDS" | cut --delimiter=':' --fields=2)
+RULE="KERNEL==\"hidraw*\", ATTRS{idVendor}==\"${VENDOR_ID}\", ATTRS{idProduct}==\"${PRODUCT_ID}\", MODE=\"0660\", GROUP=\"${EXISTING_GROUP_NAME}\""
+echo "$RULE_PATH"
+echo "$RULE" | sudo tee "$RULE_PATH"
+
+sudo udevadm control --reload && sudo udevadm trigger
+
+echo "=== UNPLUG AND PLUG THE KEYBOARD ==="
